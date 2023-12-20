@@ -4,11 +4,11 @@ import { unstable_noStore as noStore } from 'next/cache';
 import {
     CustomerField,
     CustomersTableType,
-    InvoiceForm,
     InvoicesTable,
     LatestInvoiceRaw,
     User,
     Revenue,
+	Invoice,
 } from './definitions';
 import { formatCurrency } from './utils';
 
@@ -156,6 +156,22 @@ export async function fetchInvoicesPages(query: string) {
 }
 
 export async function fetchInvoiceById(id: string) {
+    noStore();
+    try {
+        const data = await sql<Invoice>`
+		SELECT id, customer_id, amount, date, status
+		FROM invoices
+		WHERE id = ${id}`;
+		const invoice = data.rows[0];
+		invoice.amount /= 100;
+        return invoice;
+    } catch (error) {
+        console.error('Database Error:', error);
+        throw new Error('Failed to fetch invoice.');
+    }
+}
+
+export async function fetchLastestInvoice() {
     noStore();
     try {
         // Fetch the last 5 invoices, sorted by date
